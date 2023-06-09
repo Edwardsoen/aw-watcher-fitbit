@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "aw-watcher-fitbit"
+version = "0.1.0"
+description = "Activitywatch Watcher to track activity from fitbit device"
+authors = ["Edward S"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aw-client = "^0.5.12"
+requests = "^2.31.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
