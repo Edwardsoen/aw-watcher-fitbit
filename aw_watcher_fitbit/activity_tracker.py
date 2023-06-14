@@ -17,8 +17,8 @@ class SleepTracker():
         return f"https://api.fitbit.com/1.2/user/{self.user_id}/sleep/date/{start_date.strftime('%Y-%m-%d')}/{end_date.strftime('%Y-%m-%d')}.json"
 
     def get_sleep_data(self, start_date, end_date): 
-        self._requests_data(start_date=start_date, end_date=end_date)
-        pass
+        return self._requests_data(start_date=start_date, end_date=end_date)
+        
 
     def _parse_data(self, data:dict) -> list:
         sleep_time_stamp = []
@@ -32,11 +32,12 @@ class SleepTracker():
         end_point = self.get_end_point(start_date=start_date, end_date=end_date)
         header = {"authorization": f"Bearer {self.access_token}"}
         response = requests.get(end_point, headers=header)    
+        data = {}
         if(response.status_code == 401): 
             raise AuthorizationTokenExpire
         else:
-            self._parse_data(response.json())
-        pass
+            data = self._parse_data(response.json())
+        return data
 
 
 if __name__ == "__main__": 
