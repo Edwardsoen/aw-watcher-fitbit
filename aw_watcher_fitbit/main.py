@@ -50,11 +50,11 @@ def get_sleep_by_date(access_token:str):
     response = requests.get(end_point, headers=header)    
     print(response.status_code)
 
-def insert_heartbeat_by_duration(client:ActivityWatchClient, start_time: datetime, data:dict ,duration_seconds:int): 
+def insert_heartbeat_by_duration(client:ActivityWatchClient, start_time: datetime, data:dict ,duration_seconds:int, bucket_id:str): 
     event = Event(timestamp = start_time, data = data)
-    secondEvent = Event(timestamp = start_time + timedelta(seconds = duration_seconds))
-    client.heartbeat(bucket_id, event, pulsetime=duration_seconds - 10, queued=True)
-    client.heartbeat(bucket_id, secondEvent, pulsetime=duration_seconds - 10, queued=True)
+    secondEvent = Event(timestamp = start_time + timedelta(seconds = duration_seconds), data = data)
+    client.heartbeat(bucket_id, event, pulsetime=duration_seconds+10)
+    client.heartbeat(bucket_id, secondEvent, pulsetime=duration_seconds+10)
 
 if __name__ == "__main__":
     config = load_config()
@@ -62,26 +62,23 @@ if __name__ == "__main__":
     poll_time = config[APP_NAME]["poll_time"]
     user_id = config[APP_NAME]["user_id"]
     sleep_tracker = SleepTracker(access_token=access_token, user_id=user_id)
-    now = datetime.now()
-    yesterday = now- timedelta(days=10)
-
     client = ActivityWatchClient(APP_NAME, testing=True)
     bucket_id = "{}_{}".format(APP_NAME, client.client_hostname)
-    client.create_bucket(bucket_id, event_type="dummydata")
-    
+    client.create_bucket(bucket_id, event_type= "Current Activity", queued = True)
     while(True): 
+        # breakpoint()
+        now = datetime.now()
+        yesterday = now- timedelta(days=10)
         try: 
             data = sleep_tracker.get_sleep_data(yesterday, now)
             for i in data: 
-                data = {"level": i["level"]}
+                data = {"Current Activity": "Sleep", "level": i["level"]}
                 date = datetime.strptime(i["dateTime"], '%Y-%m-%dT%H:%M:%S.%f')
-                date = date.astimezone(timezone.utc)
                 event = Event(timestamp = date, data = data)
-                # client.insert_event(bucket_id, event)
-                insert_heartbeat_by_duration(client=client, start_time= date, data =data, duration_seconds= int(i["seconds"]))
-                # client.heartbeat(bucket_id, event, pulsetime=300, queued=True, commit_interval=4.0)
-            # breakpoint()
+                insert_heartbeat_by_duration(client=client, start_time= date, data = data, duration_seconds= int(i["seconds"]), bucket_id=bucket_id)
         except AuthorizationTokenExpire: 
-            refresh_access_token("",config[APP_NAME]["refresh_token"] )
+            refresh_access_token(config[APP_NAME]["client_id"], 
+                                 config[APP_NAME]["refresh_token"] )
             continue
         sleep(poll_time)
+        
