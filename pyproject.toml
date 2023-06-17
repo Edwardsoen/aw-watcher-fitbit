@@ -8,6 +8,7 @@ authors = ["Edward S"]
 python = "^3.10"
 aw-client = "^0.5.12"
 requests = "^2.31.0"
+pytz = "^2023.3"
 
 [tool.poetry.dev-dependencies]
 

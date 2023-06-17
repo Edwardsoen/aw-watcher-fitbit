@@ -2,6 +2,17 @@ from datetime import datetime
 import requests
 
 
+class ActivityData(): 
+    def __init__(self, timestamp:datetime, data:dict,  duration:int) -> None:
+        self.timestamp = timestamp
+        self.data = data 
+        self.duration = duration
+
+
+def sort_activity_data(data:list[ActivityData]): 
+    data.sort(key=lambda x: x.timestamp)
+    
+
 class AuthorizationTokenExpire(Exception):
     def __init__(self, message="Authorization Token Expired"):
         self.message = message
@@ -19,14 +30,26 @@ class SleepTracker():
     def get_sleep_data(self, start_date, end_date): 
         return self._requests_data(start_date=start_date, end_date=end_date)
         
-
-    def _parse_data(self, data:dict) -> list:
-        sleep_time_stamp = []
+    def _parse_data(self, data:dict) -> list[ActivityData]:
+        sleep_data_by_timestamp = []
         sleep_data_by_date = data["sleep"]
         for i in sleep_data_by_date: 
             sleep_data = i["levels"]["data"]
-            sleep_time_stamp += sleep_data
-        return sleep_time_stamp
+            for ii in sleep_data:
+                date = datetime.strptime(ii["dateTime"], '%Y-%m-%dT%H:%M:%S.%f')
+                data = {"Activity": 
+                        "Sleep", 
+                        "Level": ii["level"]}
+                duration = ii["seconds"] 
+                sleep_data = ActivityData(
+                    data=data, 
+                    timestamp=date, 
+                    duration=int(duration)
+                )
+                sleep_data_by_timestamp.append(sleep_data)
+        sort_activity_data(sleep_data_by_timestamp)
+        return sleep_data_by_timestamp
+    
 
     def _requests_data(self, start_date:datetime, end_date:datetime) -> dict:
         end_point = self.get_end_point(start_date=start_date, end_date=end_date)
@@ -42,7 +65,9 @@ class SleepTracker():
 
 if __name__ == "__main__": 
     from datetime import datetime, timedelta
+    test = SleepTracker("")
     now = datetime.now()
     yesterday = now- timedelta(days=1)
-    #   test.get_sleep_data(yesterday, now)
+    data = test.get_sleep_data(yesterday, now)
+    breakpoint()
     pass
